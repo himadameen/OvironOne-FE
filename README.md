@@ -1,32 +1,25 @@
-# OVIRON ONE (Frontend prototype)
+# OVIRON ONE — Hardware admin template
 
-**One platform. Every business.** — Powered by OVIRON
+Maroon & royal purple design system (light canvas, black nav).
 
-Interactive retail & POS prototype (demo data + localStorage). No backend.
+## Auth flows
 
-## Stack
+**Sign in:** email + password → splash → admin (no OTP).
 
-React · Vite · TypeScript · Tailwind · shadcn/ui · React Router · Zustand · TanStack Query · Recharts
+**Forgot password:** email → OTP screen (demo shows code in “email preview”) → enter `123456` → reset password → sign in.
 
-## Run locally
+## Demo accounts
+
+- Shop: `owner@amburpaint.demo`
+- Super: `super@oviron.demo`
+
+## Theme tokens
+
+Use Tailwind classes such as `bg-brand-primary`, `bg-brand-secondary`, `bg-nav`, `bg-surface`, `text-charcoal`, `text-muted`, `card-widget`, `data-table`, `btn-primary`, `btn-danger`, `btn-secondary`.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
-
-Open the URL from the terminal (usually `http://localhost:5173`).
-
-## Demo entry points
-
-| Login | Route |
-|--------|--------|
-| Platform admin | `/platform` |
-| Ambur Paint House | `/app` (default seed) |
-| Toy House / Oviron Leather | Tenant switcher in shop header |
-
-Use **Reset demo** in the shop header to restore seed data.
-
-## Docs
-
-See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for staged delivery and follow-ups (API, E2E, print templates).

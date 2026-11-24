@@ -1,72 +1,110 @@
-import tailwindcssAnimate from "tailwindcss-animate";
-
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,css}'],
+  safelist: [
+    'bg-surface',
+    'bg-row-hover',
+    'bg-table-header',
+    'text-h1',
+    'text-h2',
+    'text-body',
+    'text-small',
+    'text-stat',
+    'text-charcoal',
+    'text-muted',
+    'text-accent',
+    'text-brand-primary',
+    'text-brand-primary-foreground',
+    'text-brand-secondary',
+    'border-silver',
+    'border-brand-primary',
+    'rounded-card',
+    'rounded-btn',
+    'shadow-card',
+    'bg-brand-primary',
+    'bg-brand-primary-hover',
+    'bg-brand-secondary',
+    'bg-brand-secondary-hover',
+    'bg-brand-accent',
+    'hover:bg-row-hover',
+    'hover:bg-brand-primary-hover',
+    'hover:bg-white/10',
+    'focus:border-brand-primary',
+    'focus:ring-brand-accent/30',
+    'bg-brand-accent/10',
+    'border-brand-accent/40',
+    'fill-accent',
+    'text-accent',
+  ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Roboto", "system-ui", "sans-serif"],
-        display: ["Noto Sans", "Roboto", "system-ui", "sans-serif"],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+      },
+      fontSize: {
+        h1: ['1.75rem', { lineHeight: '1.25', fontWeight: '600' }],
+        h2: ['1.25rem', { lineHeight: '1.35', fontWeight: '600' }],
+        body: ['0.875rem', { lineHeight: '1.55', fontWeight: '400' }],
+        small: ['0.75rem', { lineHeight: '1.45', fontWeight: '500' }],
+        stat: ['1.0625rem', { lineHeight: '1.35', fontWeight: '600' }],
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+        brand: {
+          primary: {
+            DEFAULT: '#2C3E5C',
+            hover: '#243247',
+            foreground: '#FAF8F5',
+          },
+          accent: {
+            DEFAULT: '#B8956A',
+            soft: '#E8DCC8',
+          },
+          secondary: {
+            DEFAULT: '#8B4D57',
+            hover: '#743F48',
+            foreground: '#FAF8F5',
+          },
         },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+        obsidian: '#1A2234',
+        surface: {
+          DEFAULT: '#F6F4F1',
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        highlight: {
-          DEFAULT: "hsl(var(--highlight))",
-          foreground: "hsl(var(--highlight-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
-        maroon: {
-          DEFAULT: "hsl(var(--maroon))",
-          foreground: "hsl(var(--maroon-foreground))",
-        },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          muted: "hsl(var(--sidebar-muted))",
-          border: "hsl(var(--sidebar-border))",
-        },
+        charcoal: '#1E2430',
+        muted: '#5C5866',
+        silver: '#E3DFD8',
+        'table-header': '#FAF8F5',
+        'row-hover': '#F0EDE8',
+        accent: '#B8956A',
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        card: '10px',
+        btn: '8px',
+      },
+      boxShadow: {
+        card: '0 4px 24px -4px rgb(30 36 48 / 0.08), 0 1px 2px rgb(30 36 48 / 0.04)',
+        shell: '0 1px 0 rgb(255 255 255 / 0.06) inset',
+      },
+      animation: {
+        'splash-fade': 'splashFade 0.8s ease-out forwards',
+        'splash-slide': 'splashSlide 1s ease-out 0.3s forwards',
+        'pulse-soft': 'pulseSoft 2.5s ease-in-out infinite',
+      },
+      keyframes: {
+        splashFade: {
+          '0%': { opacity: '0', transform: 'scale(0.98)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        splashSlide: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseSoft: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.82' },
+        },
       },
     },
   },
-  plugins: [tailwindcssAnimate],
-};
+  plugins: [],
+}
