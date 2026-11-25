@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ArrowRightLeft, Package, PackageX, Timer, Wallet } from 'lucide-react'
 import { PageShell } from '@/components/PageShell'
@@ -23,7 +24,16 @@ const FILTERS: { id: StockQuickFilter; label: string }[] = [
 
 export function InventoryOverviewPage() {
   const { kpis, recentMovements, shopId } = useInventoryOverview()
-  const variants = useInventoryStore((s) => s.variants.filter((v) => v.shopId === shopId))
+  const allVariants = useInventoryStore((s) => s.variants)
+  const categories = useInventoryStore((s) => s.categories)
+  const variants = useMemo(
+    () => allVariants.filter((v) => v.shopId === shopId),
+    [allVariants, shopId]
+  )
+  const categoryNames = useMemo(
+    () => categories.filter((c) => c.shopId === shopId).map((c) => c.name),
+    [categories, shopId]
+  )
 
   return (
     <PageShell
@@ -54,14 +64,7 @@ export function InventoryOverviewPage() {
             </Link>
           ))}
         </div>
-        <p className="mt-3 text-xs text-muted">
-          Categories:{' '}
-          {useInventoryStore
-            .getState()
-            .categories.filter((c) => c.shopId === shopId)
-            .map((c) => c.name)
-            .join(' · ')}
-        </p>
+        <p className="mt-3 text-xs text-muted">Categories: {categoryNames.join(' · ')}</p>
       </section>
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_auto]">

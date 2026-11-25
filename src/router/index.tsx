@@ -10,7 +10,9 @@ import { ShopDashboardPage } from '@/pages/admin/ShopDashboardPage'
 import { ShopProfilePage } from '@/pages/admin/ShopProfilePage'
 import { PlaceholderModulePage } from '@/pages/admin/PlaceholderModulePage'
 import { InventoryModuleLayout } from '@/pages/admin/inventory/InventoryModuleLayout'
-import { InventoryOverviewPage } from '@/pages/admin/inventory/InventoryOverviewPage'
+import { InventoryStocksPage } from '@/pages/admin/inventory/InventoryStocksPage'
+import { InventoryBrandsPage } from '@/pages/admin/inventory/InventoryBrandsPage'
+import { InventoryCategoriesPage } from '@/pages/admin/inventory/InventoryCategoriesPage'
 import { InventoryVariantsPage } from '@/pages/admin/inventory/InventoryVariantsPage'
 import { InventoryVariantDetailPage } from '@/pages/admin/inventory/InventoryVariantDetailPage'
 import { InventoryBatchesPage } from '@/pages/admin/inventory/InventoryBatchesPage'
@@ -45,7 +47,9 @@ export const router = createBrowserRouter([
             path: 'inventory',
             element: <InventoryModuleLayout />,
             children: [
-              { index: true, element: <InventoryOverviewPage /> },
+              { index: true, element: <InventoryStocksPage /> },
+              { path: 'brands', element: <InventoryBrandsPage /> },
+              { path: 'categories', element: <InventoryCategoriesPage /> },
               { path: 'variants', element: <InventoryVariantsPage /> },
               { path: 'variants/:variantId', element: <InventoryVariantDetailPage /> },
               { path: 'batches', element: <InventoryBatchesPage /> },

@@ -14,7 +14,11 @@ import { InventoryPageHeader } from '@/pages/admin/inventory/InventoryModuleLayo
 export function InventoryMovementsPage() {
   const shopId = useAuthStore((s) => s.shopId) ?? 'shop-ambur'
   const movements = useInventoryStore((s) => s.movements)
-  const variants = useInventoryStore((s) => s.variants.filter((v) => v.shopId === shopId))
+  const allVariants = useInventoryStore((s) => s.variants)
+  const variants = useMemo(
+    () => allVariants.filter((v) => v.shopId === shopId),
+    [allVariants, shopId]
+  )
 
   const [from, setFrom] = useState('2025-11-01')
   const [to, setTo] = useState('2025-11-30')

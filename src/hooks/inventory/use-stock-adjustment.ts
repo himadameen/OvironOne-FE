@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { convertFromBase, convertToBase, formatQty } from '@/inventory/units'
 import { stockAdjustmentSchema, type StockAdjustmentInput } from '@/inventory/schemas'
 import { useAuthStore } from '@/stores/auth-store'
@@ -20,8 +20,12 @@ export function useStockAdjustment() {
   const shopId = useAuthStore((s) => s.shopId) ?? 'shop-ambur'
   const email = useAuthStore((s) => s.email) ?? 'admin@demo'
   const applyAdjustment = useInventoryStore((s) => s.applyAdjustment)
-  const variants = useInventoryStore((s) => s.variants.filter((v) => v.shopId === shopId))
+  const allVariants = useInventoryStore((s) => s.variants)
   const batches = useInventoryStore((s) => s.batches)
+  const variants = useMemo(
+    () => allVariants.filter((v) => v.shopId === shopId),
+    [allVariants, shopId]
+  )
 
   const [form, setForm] = useState<StockAdjustmentInput>(defaultForm)
   const [errors, setErrors] = useState<Record<string, string>>({})

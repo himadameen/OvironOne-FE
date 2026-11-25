@@ -37,7 +37,7 @@ export function InventoryVariantsPage() {
     if (!status) return
     const allowed: StockQuickFilter[] = ['all', 'low', 'expiring', 'expired', 'oos']
     if (allowed.includes(status)) {
-      setStatusFilter(status)
+      setStatusFilter((current) => (current === status ? current : status))
     }
   }, [params, setStatusFilter])
 

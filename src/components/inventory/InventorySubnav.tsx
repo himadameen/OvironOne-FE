@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { INVENTORY_NAV } from '@/pages/admin/inventory/inventory-nav'
 
 export function InventorySubnav() {
+  if (INVENTORY_NAV.length === 0) return null
   return (
     <nav className="flex flex-wrap gap-2" aria-label="Inventory sections">
       {INVENTORY_NAV.map((item) => (

@@ -21,11 +21,38 @@ export type AdjustmentReason =
 
 export type StockHealth = 'ok' | 'low' | 'oos' | 'expired' | 'expiring'
 
+/** Paint needs shade; accessories (brushes, rollers) use count units, etc. */
+export type InventoryCategoryKind = 'paint' | 'accessory' | 'consumable'
+
 export interface InventoryCategory {
   id: string
   shopId: string
   name: string
   description?: string
+  kind: InventoryCategoryKind
+  active: boolean
+  defaultDisplayUnit: DisplayUnit
+}
+
+export interface InventoryBrand {
+  id: string
+  shopId: string
+  name: string
+  active: boolean
+  pocName?: string
+  pocPhone?: string
+  dealerNumber?: string
+  dealerEmail?: string
+}
+
+export interface BrandFormInput {
+  id?: string
+  name: string
+  active: boolean
+  pocName?: string
+  pocPhone?: string
+  dealerNumber?: string
+  dealerEmail?: string
 }
 
 export interface ProductVariant {
@@ -33,6 +60,7 @@ export interface ProductVariant {
   shopId: string
   productId: string
   productName: string
+  brandId?: string
   brand: string
   categoryId: string
   categoryName: string
@@ -49,6 +77,8 @@ export interface ProductVariant {
   reorderLevelBase: number
   purchaseCostPerBase: number
   sellingCostPerBase: number
+  /** Max discount % off list selling price (POS floor). */
+  maxDiscountPercent?: number
 }
 
 export interface StockBatch {

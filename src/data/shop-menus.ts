@@ -8,7 +8,7 @@ const tierRank: Record<PackageTier, number> = {
 
 export const shopMenuCatalog: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', path: '/admin', package: 'starter', group: 'Overview' },
-  { id: 'inventory', label: 'Inventory', path: '/admin/inventory', package: 'starter', group: 'Operations' },
+  { id: 'inventory', label: 'Stocks', path: '/admin/inventory', package: 'starter', group: 'Operations' },
   { id: 'pos', label: 'Billing & POS', path: '/admin/pos', package: 'starter', group: 'Operations' },
   { id: 'suppliers', label: 'Suppliers', path: '/admin/suppliers', package: 'growth', group: 'Operations' },
   { id: 'rentals', label: 'Equipment rental', path: '/admin/rentals', package: 'growth', group: 'Construction' },

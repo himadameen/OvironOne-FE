@@ -9,6 +9,8 @@ export function useInventoryVariants() {
   const shopId = useAuthStore((s) => s.shopId) ?? SHOP_FALLBACK
   const batches = useInventoryStore((s) => s.batches)
   const movements = useInventoryStore((s) => s.movements)
+  const categories = useInventoryStore((s) => s.categories)
+  const warehouses = useInventoryStore((s) => s.warehouses)
 
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState('all')
@@ -41,6 +43,15 @@ export function useInventoryVariants() {
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize)
 
+  const shopCategories = useMemo(
+    () => categories.filter((c) => c.shopId === shopId),
+    [categories, shopId]
+  )
+  const shopWarehouses = useMemo(
+    () => warehouses.filter((w) => w.shopId === shopId),
+    [warehouses, shopId]
+  )
+
   return {
     shopId,
     search,
@@ -56,7 +67,7 @@ export function useInventoryVariants() {
     totalPages,
     rows: pageRows,
     allRows: rows,
-    categories: useInventoryStore.getState().categories.filter((c) => c.shopId === shopId),
-    warehouses: useInventoryStore.getState().warehouses.filter((w) => w.shopId === shopId),
+    categories: shopCategories,
+    warehouses: shopWarehouses,
   }
 }
