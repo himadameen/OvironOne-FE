@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import type { BrandFormInput, InventoryBrand } from '@/inventory/types'
 import { CatalogItemActiveToggle } from '@/components/inventory/CatalogActiveToggle'
 
@@ -18,6 +19,23 @@ function emptyBrand(): Omit<BrandFormInput, 'id'> {
     pocPhone: '',
     dealerNumber: '',
     dealerEmail: '',
+    gstin: '',
+    territory: '',
+    creditTerms: '',
+  }
+}
+
+function brandToForm(editing: InventoryBrand): Omit<BrandFormInput, 'id'> {
+  return {
+    name: editing.name,
+    active: editing.active,
+    pocName: editing.pocName ?? '',
+    pocPhone: editing.pocPhone ?? '',
+    dealerNumber: editing.dealerNumber ?? '',
+    dealerEmail: editing.dealerEmail ?? '',
+    gstin: editing.gstin ?? '',
+    territory: editing.territory ?? '',
+    creditTerms: editing.creditTerms ?? '',
   }
 }
 
@@ -26,19 +44,10 @@ export function BrandFormModal({ open, editing, onClose, onSave }: BrandFormModa
 
   useEffect(() => {
     if (!open) return
-    if (editing) {
-      setForm({
-        name: editing.name,
-        active: editing.active,
-        pocName: editing.pocName ?? '',
-        pocPhone: editing.pocPhone ?? '',
-        dealerNumber: editing.dealerNumber ?? '',
-        dealerEmail: editing.dealerEmail ?? '',
-      })
-    } else {
-      setForm(emptyBrand())
-    }
+    setForm(editing ? brandToForm(editing) : emptyBrand())
   }, [open, editing])
+
+  useBodyScrollLock(open)
 
   if (!open) return null
 
@@ -51,18 +60,14 @@ export function BrandFormModal({ open, editing, onClose, onSave }: BrandFormModa
     if (!form.name.trim()) return
     onSave({
       id: editing?.id,
+      ...form,
       name: form.name,
-      active: form.active,
-      pocName: form.pocName,
-      pocPhone: form.pocPhone,
-      dealerNumber: form.dealerNumber,
-      dealerEmail: form.dealerEmail,
     })
     onClose()
   }
 
   return (
-    <div className="confirm-backdrop" role="presentation" onClick={onClose}>
+    <div className="confirm-backdrop" role="presentation">
       <div
         className="support-dialog stock-form-dialog"
         role="dialog"
@@ -140,6 +145,41 @@ export function BrandFormModal({ open, editing, onClose, onSave }: BrandFormModa
                     value={form.dealerEmail}
                     onChange={(e) => patch('dealerEmail', e.target.value)}
                     placeholder="optional"
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="stock-form-section">
+              <h3 className="stock-form-section-title">Accounts & territory</h3>
+              <div className="stock-form-grid">
+                <label className="stock-form-field">
+                  <span className="stock-form-label">GSTIN</span>
+                  <input
+                    className="stock-form-input uppercase"
+                    value={form.gstin}
+                    onChange={(e) => patch('gstin', e.target.value.toUpperCase())}
+                    placeholder="15-character GSTIN"
+                    maxLength={15}
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="stock-form-field">
+                  <span className="stock-form-label">Credit terms</span>
+                  <input
+                    className="stock-form-input"
+                    value={form.creditTerms}
+                    onChange={(e) => patch('creditTerms', e.target.value)}
+                    placeholder="Net 30, COD, …"
+                  />
+                </label>
+                <label className="stock-form-field stock-form-field--full">
+                  <span className="stock-form-label">Territory</span>
+                  <input
+                    className="stock-form-input"
+                    value={form.territory}
+                    onChange={(e) => patch('territory', e.target.value)}
+                    placeholder="Town, district or beat"
                   />
                 </label>
               </div>

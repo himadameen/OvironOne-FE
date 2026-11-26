@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import { useConfirmDialogStore } from '@/stores/confirm-dialog-store'
 
 export function ConfirmDialogHost() {
@@ -12,19 +13,12 @@ export function ConfirmDialogHost() {
   const alertOnly = useConfirmDialogStore((s) => s.alertOnly)
   const close = useConfirmDialogStore((s) => s.close)
 
+  useBodyScrollLock(isOpen)
+
   if (!isOpen) return null
 
-  const dismissBackdrop = () => close(alertOnly ? true : false)
-
   return createPortal(
-    <div
-      className="confirm-backdrop"
-      role="presentation"
-      onClick={dismissBackdrop}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') dismissBackdrop()
-      }}
-    >
+    <div className="confirm-backdrop" role="presentation">
       <div
         className="confirm-dialog"
         role="alertdialog"

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -41,6 +42,7 @@ import { STOCK_SHORT } from '@/inventory/stock-labels'
 import { totalPurchasedQtyBase } from '@/inventory/stock-quantity'
 import type { ProductVariant, StockBatch, StockMovement } from '@/inventory/types'
 import { branchesForShop } from '@/data/mock-branches'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { confirmDialog } from '@/stores/confirm-dialog-store'
@@ -162,6 +164,19 @@ export function InventoryStocksPage() {
   const [tradeHistoryYear, setTradeHistoryYear] = useState(() => new Date().getFullYear())
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ProductVariant | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useBodyScrollLock(expiryOpen)
+
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (!editId) return
+    const v = variants.find((x) => x.id === editId && x.shopId === shopId)
+    if (!v) return
+    setEditing(v)
+    setFormOpen(true)
+    setSearchParams({}, { replace: true })
+  }, [searchParams, variants, shopId, setSearchParams])
 
   const branches = branchesForShop(shopId)
   const warehouseIds = warehouseIdsForBranchFilter(shopId, branchId)
@@ -333,10 +348,11 @@ export function InventoryStocksPage() {
   }
 
   return (
-    <div className="page-wrap stocks-page">
+    <div className="page-wrap stocks-page stocks-page--anchored">
       <div className="stocks-catalog-subnav">
         <InventorySubnav />
       </div>
+      <div className="stocks-page-body">
       <header className="stocks-hero card-widget stocks-hero--compact">
         <div className="stocks-hero-top">
           <div className="stocks-hero-copy">
@@ -633,9 +649,9 @@ export function InventoryStocksPage() {
                   <th>Product</th>
                   <th>Branch</th>
                   <th className="stocks-instock-col">In stock</th>
-                  <th>Cost</th>
-                  <th>Selling</th>
-                  <th className="whitespace-nowrap">{STOCK_SHORT.discSell}</th>
+                  <th className="stocks-money-col">Cost</th>
+                  <th className="stocks-money-col">Selling</th>
+                  <th className="stocks-money-col whitespace-nowrap">{STOCK_SHORT.discSell}</th>
                   <th className="whitespace-nowrap">{STOCK_SHORT.expiry}</th>
                   <th className="stocks-table-actions-col" />
                 </tr>
@@ -670,21 +686,23 @@ export function InventoryStocksPage() {
                           {branchLabelForWarehouse(shopId, variant.warehouseId)}
                         </span>
                       </td>
-                      <td className="stocks-qty-cell">
-                        <p className="stocks-qty-remaining" title="Remaining">
-                          {qtyOnHandDisplay(qtyBase, variant)} {STOCK_SHORT.remaining}
-                        </p>
-                        <p className="stocks-qty-purchased" title="Purchased">
-                          {qtyOnHandDisplay(purchasedBase, variant)} {STOCK_SHORT.purchased}
-                        </p>
+                      <td className="stocks-qty-cell stocks-instock-col">
+                        <div className="stocks-qty-inner">
+                          <p className="stocks-qty-remaining" title="Remaining">
+                            {qtyOnHandDisplay(qtyBase, variant)} {STOCK_SHORT.remaining}
+                          </p>
+                          <p className="stocks-qty-purchased" title="Purchased">
+                            {qtyOnHandDisplay(purchasedBase, variant)} {STOCK_SHORT.purchased}
+                          </p>
+                        </div>
                       </td>
-                      <td className="whitespace-nowrap text-sm tabular-nums">
+                      <td className="stocks-money-col whitespace-nowrap text-sm tabular-nums">
                         {ratePerDisplayUnit(variant.purchaseCostPerBase, variant)}
                       </td>
-                      <td className="whitespace-nowrap text-sm tabular-nums">
+                      <td className="stocks-money-col whitespace-nowrap text-sm tabular-nums">
                         {ratePerDisplayUnit(variant.sellingCostPerBase, variant)}
                       </td>
-                      <td className="whitespace-nowrap text-sm tabular-nums">
+                      <td className="stocks-money-col whitespace-nowrap text-sm tabular-nums">
                         {(() => {
                           const discPct = maxDiscountPercentFor(variant)
                           const floorBase = sellingPriceAfterMaxDiscount(
@@ -794,6 +812,7 @@ export function InventoryStocksPage() {
           <p className="px-4 py-6 text-sm text-muted">No stock lines match your filters.</p>
         ) : null}
       </section>
+      </div>
 
       <StockFormModal
         open={formOpen}
@@ -807,7 +826,7 @@ export function InventoryStocksPage() {
       />
 
       {expiryOpen ? (
-        <div className="confirm-backdrop" role="presentation" onClick={() => setExpiryOpen(false)}>
+        <div className="confirm-backdrop" role="presentation">
           <div className="support-dialog max-w-xl" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2 className="confirm-dialog-title">Exp lines</h2>
             <p className="confirm-dialog-message">≤30 days or already exp.</p>

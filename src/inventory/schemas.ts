@@ -27,6 +27,18 @@ export const stockAdjustmentSchema = z
 
 export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>
 
+export const branchTransferSchema = z.object({
+  toBranchId: z.string().min(1, 'Select destination branch.'),
+  variantId: z.string().min(1, 'Select a product (SKU).'),
+  batchId: z.string().min(1, 'Select a batch lot.'),
+  qty: z.coerce.number().positive('Quantity must be greater than zero.'),
+  unit: displayUnitSchema,
+  note: z.string().max(500).optional(),
+  effectiveDate: z.string().min(1, 'Date is required.'),
+})
+
+export type BranchTransferInput = z.infer<typeof branchTransferSchema>
+
 export function parseDisplayUnit(value: string): DisplayUnit {
   return displayUnitSchema.parse(value)
 }

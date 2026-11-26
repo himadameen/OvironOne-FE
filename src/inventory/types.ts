@@ -32,6 +32,10 @@ export interface InventoryCategory {
   kind: InventoryCategoryKind
   active: boolean
   defaultDisplayUnit: DisplayUnit
+  /** Pre-filled in Add stock for new SKUs */
+  defaultPackLabel?: string
+  /** When false, Add stock hides expiry (tools, etc.) */
+  trackExpiry?: boolean
 }
 
 export interface InventoryBrand {
@@ -43,6 +47,9 @@ export interface InventoryBrand {
   pocPhone?: string
   dealerNumber?: string
   dealerEmail?: string
+  gstin?: string
+  territory?: string
+  creditTerms?: string
 }
 
 export interface BrandFormInput {
@@ -53,6 +60,9 @@ export interface BrandFormInput {
   pocPhone?: string
   dealerNumber?: string
   dealerEmail?: string
+  gstin?: string
+  territory?: string
+  creditTerms?: string
 }
 
 export interface ProductVariant {
@@ -107,6 +117,12 @@ export interface StockMovement {
   reference: string
   note?: string
   reason?: AdjustmentReason
+  /** Other shop (rare — multi-entity). */
+  counterpartyShopId?: string
+  /** Other branch warehouse in a branch transfer. */
+  counterpartyWarehouseId?: string
+  /** Pairs outbound + inbound ledger lines. */
+  transferGroupId?: string
 }
 
 export interface Warehouse {

@@ -24,6 +24,9 @@ export const MOCK_BRANDS: InventoryBrand[] = [
     pocPhone: '+91 98430 11221',
     dealerNumber: 'AP-TN-8842',
     dealerEmail: 'ravi.k@asianpaints-dealer.in',
+    gstin: '33AABCA1234F1Z5',
+    territory: 'Ambur · Vellore district',
+    creditTerms: 'Net 30',
   },
   {
     id: 'brand-bg',
@@ -33,6 +36,9 @@ export const MOCK_BRANDS: InventoryBrand[] = [
     pocName: 'Meena S',
     pocPhone: '+91 94432 44001',
     dealerNumber: 'BG-AMB-2109',
+    gstin: '33AAACB5678G2Z1',
+    territory: 'Ambur',
+    creditTerms: 'Net 15',
   },
   { id: 'brand-jk', shopId: SHOP, name: 'JK', active: true, pocName: 'Imran', dealerNumber: 'JK-7761' },
   { id: 'brand-pn', shopId: SHOP, name: 'Pioneer', active: true, dealerNumber: 'PN-0093' },
@@ -55,6 +61,8 @@ export const MOCK_CATEGORIES: InventoryCategory[] = [
     kind: 'paint',
     active: true,
     defaultDisplayUnit: 'L',
+    defaultPackLabel: '1 L',
+    trackExpiry: true,
   },
   {
     id: 'cat-exterior',
@@ -87,6 +95,8 @@ export const MOCK_CATEGORIES: InventoryCategory[] = [
     kind: 'consumable',
     active: true,
     defaultDisplayUnit: 'kg',
+    defaultPackLabel: '1 kg',
+    trackExpiry: true,
   },
   {
     id: 'cat-thinner',
@@ -104,6 +114,8 @@ export const MOCK_CATEGORIES: InventoryCategory[] = [
     kind: 'accessory',
     active: true,
     defaultDisplayUnit: 'nos',
+    defaultPackLabel: '1 nos',
+    trackExpiry: false,
   },
   {
     id: 'cat-tape',

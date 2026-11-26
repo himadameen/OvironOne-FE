@@ -4,7 +4,7 @@ import { fifoValueFromBatches, totalQtyBase, weightedAvgCost } from '@/inventory
 import { formatInr, marginPercent } from '@/inventory/format-money'
 import { DEFAULT_MAX_DISCOUNT_PERCENT } from '@/inventory/pricing'
 import { cloneInventorySeed } from '@/inventory/mock-data'
-import type { StockAdjustmentInput } from '@/inventory/schemas'
+import type { BranchTransferInput, StockAdjustmentInput } from '@/inventory/schemas'
 import { matchesQuickFilter, variantHealth } from '@/inventory/status'
 import type {
   BrandFormInput,
@@ -18,6 +18,12 @@ import type {
   Warehouse,
 } from '@/inventory/types'
 import { warehouseForBranch } from '@/inventory/branch-warehouses'
+
+const BATCH_NO_EXPIRY = '2099-12-31'
+
+function batchExpiryFromForm(expiry?: string) {
+  return expiry?.trim() ? expiry.trim() : BATCH_NO_EXPIRY
+}
 import type { StockFormValues } from '@/inventory/stock-form-schema'
 import { convertFromBase, convertToBase, formatQty } from '@/inventory/units'
 
@@ -53,6 +59,8 @@ interface InventoryState {
       kind: InventoryCategoryKind
       active: boolean
       defaultDisplayUnit: ProductVariant['defaultDisplayUnit']
+      defaultPackLabel?: string
+      trackExpiry?: boolean
     }
   ) => string
   receiveStockOnVariant: (
@@ -64,10 +72,19 @@ interface InventoryState {
       'branchId' | 'purchaseCost' | 'sellingCost' | 'qty' | 'defaultDisplayUnit' | 'expiryDate'
     >
   ) => { ok: true } | { ok: false; message: string }
+  recordBranchTransfer: (
+    shopId: string,
+    userEmail: string,
+    input: BranchTransferInput
+  ) => { ok: true; reference: string } | { ok: false; message: string }
 }
 
 function movementId() {
   return `mov-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+}
+
+function transferRef(seq: number) {
+  return `BRT-${String(seq).padStart(4, '0')}`
 }
 
 const seed = cloneInventorySeed()
@@ -142,6 +159,131 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     return { ok: true }
   },
 
+  recordBranchTransfer: (shopId, userEmail, input) => {
+    const state = get()
+    const toWarehouseId = warehouseForBranch(input.toBranchId)
+    if (!toWarehouseId) {
+      return { ok: false, message: 'Unknown destination branch.' }
+    }
+
+    const variant = state.variants.find((v) => v.id === input.variantId && v.shopId === shopId)
+    const batch = state.batches.find((b) => b.id === input.batchId)
+    if (!variant || !batch || batch.variantId !== variant.id) {
+      return { ok: false, message: 'Product or batch not found.' }
+    }
+
+    if (batch.warehouseId === toWarehouseId) {
+      return { ok: false, message: 'Batch is already at that branch.' }
+    }
+
+    let qtyBase: number
+    try {
+      qtyBase = convertToBase(input.qty, input.unit, variant.baseKind, variant.densityKgPerL)
+    } catch (err) {
+      return {
+        ok: false,
+        message: err instanceof Error ? err.message : 'Invalid unit conversion.',
+      }
+    }
+
+    if (batch.qtyBase < qtyBase) {
+      const onHand = convertFromBase(batch.qtyBase, input.unit, variant.baseKind, variant.densityKgPerL)
+      return {
+        ok: false,
+        message: `Batch has ${formatQty(onHand, input.unit)}; you tried to move ${formatQty(input.qty, input.unit)}.`,
+      }
+    }
+
+    const destWh = state.warehouses.find((w) => w.id === toWarehouseId)
+    const transferGroupId = `xfr-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    const reference = transferRef(
+      state.movements.filter((m) => m.reference.startsWith('BRT-')).length + 1
+    )
+    const at = new Date(input.effectiveDate).toISOString()
+
+    const existingDest = state.batches.find(
+      (b) =>
+        b.variantId === variant.id &&
+        b.warehouseId === toWarehouseId &&
+        b.batchNo === batch.batchNo &&
+        b.expiryDate === batch.expiryDate
+    )
+
+    let inboundBatchId: string
+    let nextBatches: StockBatch[]
+
+    if (existingDest) {
+      inboundBatchId = existingDest.id
+      nextBatches = state.batches.map((b) => {
+        if (b.id === batch.id) return { ...b, qtyBase: b.qtyBase - qtyBase }
+        if (b.id === existingDest.id) return { ...b, qtyBase: b.qtyBase + qtyBase }
+        return b
+      })
+    } else {
+      inboundBatchId = `bat-brt-${Date.now()}`
+      const inboundBatch: StockBatch = {
+        id: inboundBatchId,
+        variantId: variant.id,
+        batchNo: batch.batchNo,
+        mfgDate: batch.mfgDate,
+        expiryDate: batch.expiryDate,
+        qtyBase,
+        costRatePerBase: batch.costRatePerBase,
+        location: destWh?.name ?? toWarehouseId,
+        warehouseId: toWarehouseId,
+      }
+      nextBatches = [
+        ...state.batches.map((b) =>
+          b.id === batch.id ? { ...b, qtyBase: b.qtyBase - qtyBase } : b
+        ),
+        inboundBatch,
+      ]
+    }
+
+    const outbound: StockMovement = {
+      id: movementId(),
+      shopId,
+      at,
+      type: 'transfer',
+      variantId: variant.id,
+      batchId: batch.id,
+      qtyDeltaBase: -qtyBase,
+      costRatePerBase: batch.costRatePerBase,
+      warehouseId: batch.warehouseId,
+      userEmail,
+      reference,
+      note: input.note,
+      reason: 'transfer',
+      counterpartyWarehouseId: toWarehouseId,
+      transferGroupId,
+    }
+
+    const inbound: StockMovement = {
+      id: movementId(),
+      shopId,
+      at,
+      type: 'transfer',
+      variantId: variant.id,
+      batchId: inboundBatchId,
+      qtyDeltaBase: qtyBase,
+      costRatePerBase: batch.costRatePerBase,
+      warehouseId: toWarehouseId,
+      userEmail,
+      reference,
+      note: input.note,
+      reason: 'transfer',
+      counterpartyWarehouseId: batch.warehouseId,
+      transferGroupId,
+    }
+
+    set({
+      batches: nextBatches,
+      movements: [inbound, outbound, ...state.movements],
+    })
+
+    return { ok: true, reference }
+  },
+
   receiveStockOnVariant: (shopId, userEmail, variantId, values) => {
     const state = get()
     const variant = state.variants.find((v) => v.id === variantId && v.shopId === shopId)
@@ -173,7 +315,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       variantId,
       batchNo: `B-RCV-${Date.now().toString().slice(-4)}`,
       mfgDate: new Date().toISOString().slice(0, 10),
-      expiryDate: values.expiryDate,
+      expiryDate: batchExpiryFromForm(values.expiryDate),
       qtyBase,
       costRatePerBase: purchaseCostPerBase,
       location: state.warehouses.find((w) => w.id === warehouseId)?.name ?? 'Store',
@@ -224,6 +366,9 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       pocPhone: input.pocPhone?.trim() || undefined,
       dealerNumber: input.dealerNumber?.trim() || undefined,
       dealerEmail: input.dealerEmail?.trim() || undefined,
+      gstin: input.gstin?.trim() || undefined,
+      territory: input.territory?.trim() || undefined,
+      creditTerms: input.creditTerms?.trim() || undefined,
     }
     const exists = Boolean(prev)
     const variants =
@@ -255,6 +400,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       kind: input.kind,
       active: input.active,
       defaultDisplayUnit: input.defaultDisplayUnit,
+      defaultPackLabel: input.defaultPackLabel?.trim() || undefined,
+      trackExpiry: input.trackExpiry,
     }
     const exists = Boolean(prev)
     const variants =
@@ -351,7 +498,13 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
         variants: state.variants.map((v) => (v.id === editVariantId ? variant : v)),
         batches: state.batches.map((b) =>
           b.variantId === editVariantId
-            ? { ...b, qtyBase, costRatePerBase: purchaseCostPerBase, expiryDate: values.expiryDate, warehouseId }
+            ? {
+                ...b,
+                qtyBase,
+                costRatePerBase: purchaseCostPerBase,
+                expiryDate: batchExpiryFromForm(values.expiryDate),
+                warehouseId,
+              }
             : b
         ),
       })
@@ -364,7 +517,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       variantId,
       batchNo: `B-NEW-${Date.now().toString().slice(-4)}`,
       mfgDate: new Date().toISOString().slice(0, 10),
-      expiryDate: values.expiryDate,
+      expiryDate: batchExpiryFromForm(values.expiryDate),
       qtyBase,
       costRatePerBase: purchaseCostPerBase,
       location: warehouse?.name ?? 'Store floor',

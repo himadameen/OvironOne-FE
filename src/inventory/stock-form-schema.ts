@@ -15,12 +15,13 @@ const baseStockForm = z.object({
   sellingCost: z.coerce.number().min(0, 'Selling cost must be 0 or more.'),
   qty: z.coerce.number().positive('Qty must be greater than zero.'),
   defaultDisplayUnit: z.enum(['L', 'ml', 'kg', 'g', 'nos']),
-  expiryDate: z.string().min(1, 'Expiry date is required.'),
+  expiryDate: z.string().optional(),
 })
 
 export function parseStockForm(
   data: unknown,
-  categoryKind: InventoryCategoryKind | null
+  categoryKind: InventoryCategoryKind | null,
+  trackExpiry = true
 ) {
   const needsShade = categoryKind === 'paint'
   return baseStockForm.superRefine((val, ctx) => {
@@ -33,6 +34,9 @@ export function parseStockForm(
       if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
         ctx.addIssue({ code: 'custom', path: ['shadeHex'], message: 'Pick a colour (hex like #E8E2D4).' })
       }
+    }
+    if (trackExpiry && !val.expiryDate?.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['expiryDate'], message: 'Expiry date is required.' })
     }
   }).safeParse(data)
 }

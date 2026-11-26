@@ -18,6 +18,7 @@ import { InventoryVariantDetailPage } from '@/pages/admin/inventory/InventoryVar
 import { InventoryBatchesPage } from '@/pages/admin/inventory/InventoryBatchesPage'
 import { InventoryMovementsPage } from '@/pages/admin/inventory/InventoryMovementsPage'
 import { InventoryAdjustmentPage } from '@/pages/admin/inventory/InventoryAdjustmentPage'
+import { InventoryBranchTransferPage } from '@/pages/admin/inventory/InventoryBranchTransferPage'
 import { SuperDashboardPage } from '@/pages/super/SuperDashboardPage'
 import { SuperShopsPage } from '@/pages/super/SuperShopsPage'
 import { SuperUsersPage } from '@/pages/super/SuperUsersPage'
@@ -54,7 +55,10 @@ export const router = createBrowserRouter([
               { path: 'variants/:variantId', element: <InventoryVariantDetailPage /> },
               { path: 'batches', element: <InventoryBatchesPage /> },
               { path: 'movements', element: <InventoryMovementsPage /> },
-              { path: 'adjustments/new', element: <InventoryAdjustmentPage /> },
+              { path: 'adjustments', element: <InventoryAdjustmentPage /> },
+              { path: 'adjustments/new', element: <Navigate to="/admin/inventory/adjustments" replace /> },
+              { path: 'branch-transfers', element: <InventoryBranchTransferPage /> },
+              { path: 'shop-transfers', element: <Navigate to="/admin/inventory/branch-transfers" replace /> },
             ],
           },
           {

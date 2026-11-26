@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { Download } from 'lucide-react'
-import { PageShell } from '@/components/PageShell'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Download, Pencil, Plus, Trash2 } from 'lucide-react'
+import { InventorySectionGuide } from '@/components/inventory/InventorySectionGuide'
+import { InventoryCatalogPageLayout } from '@/components/inventory/InventoryCatalogPageLayout'
 import { ColorSwatchChip } from '@/components/inventory/ColorSwatchChip'
 import { StockStatusBadge } from '@/components/inventory/StockStatusBadge'
 import { downloadCsv } from '@/inventory/csv'
@@ -10,9 +11,15 @@ import { formatInr } from '@/inventory/format-money'
 import type { StockQuickFilter } from '@/inventory/types'
 import { convertFromBase } from '@/inventory/units'
 import { useInventoryVariants } from '@/hooks/inventory/use-inventory-variants'
-import { InventoryPageHeader } from '@/pages/admin/inventory/InventoryModuleLayout'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
+import { confirmDialog } from '@/stores/confirm-dialog-store'
+import { useInventoryStore } from '@/stores/inventory-store'
 
 export function InventoryVariantsPage() {
+  const navigate = useNavigate()
+  const shopId = useAuthStore((s) => s.shopId) ?? 'shop-ambur'
+  const deleteStockEntry = useInventoryStore((s) => s.deleteStockEntry)
   const [params, setParams] = useSearchParams()
   const {
     search,
@@ -61,19 +68,28 @@ export function InventoryVariantsPage() {
   }
 
   return (
-    <PageShell
-      title="Stock by variant"
-      description="Paint shades and packs — qty with unit, FIFO value, purchase & selling rate, margin by category."
+    <InventoryCatalogPageLayout
+      title="SKU list"
+      description="One row per sellable product (SKU) — shade, pack, prices, and on-hand qty."
       actions={
-        <button type="button" className="btn-secondary inline-flex gap-2" onClick={exportCsv}>
-          <Download className="h-4 w-4" />
-          CSV
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/admin/inventory" className="btn-primary stocks-hero-btn inline-flex gap-2">
+            <Plus className="h-4 w-4" />
+            Add SKU
+          </Link>
+          <button type="button" className="btn-secondary stocks-hero-btn inline-flex gap-2" onClick={exportCsv}>
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+        </div>
       }
     >
-      <InventoryPageHeader />
+      <InventorySectionGuide>
+        Click a row to open SKU details. <strong>Add SKU</strong> uses Stocks → Add stock. Edit and delete use the icons
+        on the right (row click won’t trigger those).
+      </InventorySectionGuide>
 
-      <div className="card-widget space-y-4">
+      <section className="stocks-list-card card-widget space-y-4 p-4 md:p-5">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="space-y-1">
             <span className="text-small font-medium text-muted">Search</span>
@@ -157,7 +173,7 @@ export function InventoryVariantsPage() {
                 <th>Selling</th>
                 <th>Reorder</th>
                 <th>Status</th>
-                <th />
+                <th className="stocks-table-actions-col" />
               </tr>
             </thead>
             <tbody>
@@ -169,7 +185,20 @@ export function InventoryVariantsPage() {
                   row.variant.densityKgPerL
                 )
                 return (
-                  <tr key={row.variant.id}>
+                  <tr
+                    key={row.variant.id}
+                    className={cn('catalog-table-row')}
+                    onClick={() => navigate(`/admin/inventory/variants/${row.variant.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        navigate(`/admin/inventory/variants/${row.variant.id}`)
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View ${row.variant.productName}`}
+                  >
                     <td>
                       <span className="font-medium">{row.variant.productName}</span>
                       <span className="block text-xs text-muted">
@@ -199,13 +228,34 @@ export function InventoryVariantsPage() {
                         ))}
                       </div>
                     </td>
-                    <td>
-                      <Link
-                        to={`/admin/inventory/variants/${row.variant.id}`}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        Open
-                      </Link>
+                    <td className="stocks-table-actions-cell" onClick={(e) => e.stopPropagation()}>
+                      <div className="stocks-table-actions">
+                        <button
+                          type="button"
+                          className="stocks-icon-btn"
+                          aria-label={`Edit ${row.variant.productName}`}
+                          onClick={() => navigate(`/admin/inventory?edit=${row.variant.id}`)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="stocks-icon-btn stocks-icon-btn--danger"
+                          aria-label={`Delete ${row.variant.productName}`}
+                          onClick={() => {
+                            void confirmDialog({
+                              title: 'Delete SKU?',
+                              message: `Remove ${row.variant.productName} and all its batch lots?`,
+                              variant: 'danger',
+                              confirmLabel: 'Delete',
+                            }).then((ok) => {
+                              if (ok) deleteStockEntry(shopId, row.variant.id)
+                            })
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -234,12 +284,13 @@ export function InventoryVariantsPage() {
                   <dd>{formatInr(row.fifoValue)}</dd>
                 </div>
               </dl>
-              <Link
-                to={`/admin/inventory/variants/${row.variant.id}`}
+              <button
+                type="button"
                 className="btn-secondary mt-3 w-full text-center text-sm"
+                onClick={() => navigate(`/admin/inventory/variants/${row.variant.id}`)}
               >
-                View variant
-              </Link>
+                Open SKU
+              </button>
             </article>
           ))}
         </div>
@@ -267,7 +318,7 @@ export function InventoryVariantsPage() {
             </button>
           </div>
         </div>
-      </div>
-    </PageShell>
+      </section>
+    </InventoryCatalogPageLayout>
   )
 }

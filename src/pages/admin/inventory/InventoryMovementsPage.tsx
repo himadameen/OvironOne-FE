@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import { Download } from 'lucide-react'
 import { PageShell } from '@/components/PageShell'
 import { ColorSwatchChip } from '@/components/inventory/ColorSwatchChip'
@@ -25,6 +26,8 @@ export function InventoryMovementsPage() {
   const [type, setType] = useState<'all' | MovementType>('all')
   const [variantId, setVariantId] = useState('all')
   const [drawerId, setDrawerId] = useState<string | null>(null)
+
+  useBodyScrollLock(drawerId !== null)
 
   const filtered = useMemo(() => {
     return movements
@@ -67,6 +70,7 @@ export function InventoryMovementsPage() {
   }
 
   return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
     <PageShell
       title="Movements"
       description="Read-only stock ledger — adjustments, purchases, transfers, and sales."
@@ -168,7 +172,7 @@ export function InventoryMovementsPage() {
       </div>
 
       {selected ? (
-        <div className="confirm-backdrop" role="presentation" onClick={() => setDrawerId(null)}>
+        <div className="confirm-backdrop" role="presentation">
           <div
             className="support-dialog max-w-md"
             role="dialog"
@@ -203,5 +207,6 @@ export function InventoryMovementsPage() {
         </div>
       ) : null}
     </PageShell>
+    </div>
   )
 }

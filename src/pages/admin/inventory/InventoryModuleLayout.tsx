@@ -5,7 +5,7 @@ import { InventorySubnav } from '@/components/inventory/InventorySubnav'
 export function InventoryModuleLayout() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
+      <div className="app-main-scroll flex min-h-0 flex-1 flex-col overflow-hidden">
         <Outlet />
       </div>
     </div>

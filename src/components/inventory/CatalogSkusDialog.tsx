@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import type { ProductVariant } from '@/inventory/types'
 import { ShadeSwatch } from '@/components/inventory/ShadeSwatch'
 
@@ -28,10 +29,12 @@ export function CatalogSkusDialog({
   onEditDetails,
   editLabel = 'Edit details',
 }: CatalogSkusDialogProps) {
+  useBodyScrollLock(open)
+
   if (!open) return null
 
   return (
-    <div className="confirm-backdrop" role="presentation" onClick={onClose}>
+    <div className="confirm-backdrop" role="presentation">
       <div
         className="support-dialog catalog-skus-dialog"
         role="dialog"

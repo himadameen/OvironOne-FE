@@ -1,28 +1,22 @@
 import { createPortal } from 'react-dom'
 import { Clock, Mail, MessageCircle, Phone, X } from 'lucide-react'
 import { CUSTOMER_SUPPORT } from '@/data/customer-support'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import { useCustomerSupportStore } from '@/stores/customer-support-store'
 
 export function CustomerSupportHost() {
   const isOpen = useCustomerSupportStore((s) => s.isOpen)
   const close = useCustomerSupportStore((s) => s.close)
 
+  useBodyScrollLock(isOpen)
+
   if (!isOpen) return null
 
   const { title, subtitle, email, phoneDisplay, phoneTel, whatsapp, hours, responseNote } =
     CUSTOMER_SUPPORT
 
-  const dismiss = () => close()
-
   return createPortal(
-    <div
-      className="confirm-backdrop"
-      role="presentation"
-      onClick={dismiss}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') dismiss()
-      }}
-    >
+    <div className="confirm-backdrop" role="presentation">
       <div
         className="support-dialog"
         role="dialog"
@@ -40,7 +34,7 @@ export function CustomerSupportHost() {
           <button
             type="button"
             className="btn-ghost-light !h-9 !w-9 shrink-0 p-0"
-            onClick={dismiss}
+            onClick={close}
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -92,7 +86,7 @@ export function CustomerSupportHost() {
               <span className="support-hours-note">{responseNote}</span>
             </p>
           </div>
-          <button type="button" className="btn-primary support-dialog-done" onClick={dismiss}>
+          <button type="button" className="btn-primary support-dialog-done" onClick={close}>
             Done
           </button>
         </div>

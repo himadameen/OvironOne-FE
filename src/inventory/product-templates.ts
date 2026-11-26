@@ -36,3 +36,11 @@ export function listProductTemplates(variants: ProductVariant[], shopId: string,
 
   return templates.sort((a, b) => b.variantCount - a.variantCount || a.productName.localeCompare(b.productName)).slice(0, limit)
 }
+
+export function variantsForProductLine(
+  variants: ProductVariant[],
+  shopId: string,
+  productId: string
+): ProductVariant[] {
+  return variants.filter((v) => v.shopId === shopId && v.productId === productId)
+}

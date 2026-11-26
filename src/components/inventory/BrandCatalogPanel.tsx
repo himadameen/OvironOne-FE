@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Plus } from 'lucide-react'
+import { CatalogTablePagination } from '@/components/inventory/CatalogTablePagination'
 import type { BrandFormInput, InventoryBrand, ProductVariant } from '@/inventory/types'
 import { BrandFormModal } from '@/components/inventory/BrandFormModal'
 import { CatalogActiveToggle } from '@/components/inventory/CatalogActiveToggle'
@@ -19,6 +20,9 @@ function brandMeta(b: InventoryBrand) {
   if (b.pocPhone) rows.push({ label: 'Phone', value: b.pocPhone })
   if (b.dealerNumber) rows.push({ label: 'Dealer no.', value: b.dealerNumber })
   if (b.dealerEmail) rows.push({ label: 'Email', value: b.dealerEmail })
+  if (b.gstin) rows.push({ label: 'GSTIN', value: b.gstin })
+  if (b.territory) rows.push({ label: 'Territory', value: b.territory })
+  if (b.creditTerms) rows.push({ label: 'Credit', value: b.creditTerms })
   return rows
 }
 
@@ -28,6 +32,8 @@ function variantsForBrand(brand: InventoryBrand, variants: ProductVariant[]) {
 
 export function BrandCatalogPanel({ brands, variants, skuCounts, onSave }: BrandCatalogPanelProps) {
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<InventoryBrand | null>(null)
   const [skuViewBrand, setSkuViewBrand] = useState<InventoryBrand | null>(null)
@@ -36,6 +42,13 @@ export function BrandCatalogPanel({ brands, variants, skuCounts, onSave }: Brand
     () => brands.filter((b) => (statusFilter === 'active' ? b.active : !b.active)),
     [brands, statusFilter]
   )
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
+  const pageRows = visible.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
 
   const openAdd = () => {
     setEditing(null)
@@ -58,7 +71,13 @@ export function BrandCatalogPanel({ brands, variants, skuCounts, onSave }: Brand
     <>
       <section className="stocks-list-card card-widget !p-0">
         <div className="stocks-list-toolbar">
-          <CatalogActiveToggle value={statusFilter} onChange={setStatusFilter} />
+          <CatalogActiveToggle
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v)
+              setPage(1)
+            }}
+          />
           <button type="button" className="btn-primary !ml-auto !h-10 px-4 text-sm" onClick={openAdd}>
             <Plus className="h-4 w-4" />
             Add brand
@@ -86,37 +105,36 @@ export function BrandCatalogPanel({ brands, variants, skuCounts, onSave }: Brand
                     </td>
                   </tr>
                 ) : (
-                  visible.map((b) => {
+                  pageRows.map((b) => {
                     const count = skuCounts[b.id] ?? 0
                     return (
-                      <tr key={b.id} className={cn(!b.active && 'stocks-row--muted')}>
-                        <td>
-                          <button
-                            type="button"
-                            className="catalog-entity-link"
-                            onClick={() => openSkuList(b)}
-                          >
-                            {b.name}
-                          </button>
-                        </td>
+                      <tr
+                        key={b.id}
+                        className={cn(
+                          'catalog-table-row',
+                          !b.active && 'stocks-row--muted'
+                        )}
+                        onClick={() => openSkuList(b)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            openSkuList(b)
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View ${count} SKUs for ${b.name}`}
+                      >
+                        <td className="font-medium text-charcoal">{b.name}</td>
                         <td className="text-sm text-muted">{b.pocName ?? '—'}</td>
                         <td className="text-sm tabular-nums">{b.dealerNumber ?? '—'}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="catalog-sku-count-link tabular-nums"
-                            onClick={() => openSkuList(b)}
-                            aria-label={`${count} SKUs for ${b.name}`}
-                          >
-                            {count}
-                          </button>
-                        </td>
+                        <td className="tabular-nums">{count}</td>
                         <td>
                           <span className={cn('catalog-crud-status', b.active && 'catalog-crud-status--on')}>
                             {b.active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="stocks-table-actions-cell">
+                        <td className="stocks-table-actions-cell" onClick={(e) => e.stopPropagation()}>
                           <div className="stocks-table-actions">
                             <button
                               type="button"
@@ -135,6 +153,17 @@ export function BrandCatalogPanel({ brands, variants, skuCounts, onSave }: Brand
               </tbody>
             </table>
           </div>
+          {visible.length > 0 ? (
+            <CatalogTablePagination
+              page={page}
+              pageSize={pageSize}
+              totalItems={visible.length}
+              pageItemCount={pageRows.length}
+              itemLabel="brands"
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          ) : null}
         </div>
       </section>
 

@@ -1,12 +1,21 @@
 import { useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { PageShell } from '@/components/PageShell'
+import { InventoryCatalogPageLayout } from '@/components/inventory/InventoryCatalogPageLayout'
+import { InventorySectionGuide } from '@/components/inventory/InventorySectionGuide'
 import { QuantityInput } from '@/components/inventory/QuantityInput'
 import { useStockAdjustment } from '@/hooks/inventory/use-stock-adjustment'
-import { InventoryPageHeader } from '@/pages/admin/inventory/InventoryModuleLayout'
 import type { DisplayUnit } from '@/inventory/types'
 
 const REASONS = ['wastage', 'damage', 'expiry', 'correction', 'sample', 'transfer'] as const
+
+const REASON_LABEL: Record<(typeof REASONS)[number], string> = {
+  wastage: 'Wastage / spill',
+  damage: 'Damaged goods',
+  expiry: 'Expired write-off',
+  correction: 'Count correction',
+  sample: 'Sample / demo',
+  transfer: 'Internal transfer (legacy)',
+}
 
 export function InventoryAdjustmentPage() {
   const navigate = useNavigate()
@@ -58,17 +67,20 @@ export function InventoryAdjustmentPage() {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const ok = submit()
-    if (ok) navigate('/admin/inventory/movements')
+    if (ok) navigate('/admin/inventory/adjustments', { replace: true })
   }
 
   return (
-    <PageShell
-      title="Stock adjustment"
-      description="Increase or decrease batch qty with unit toggle. Movements are append-only."
+    <InventoryCatalogPageLayout
+      title="Qty fix"
+      description="Fix on-hand qty on a specific batch lot after wastage, damage, stock-take, or samples."
     >
-      <InventoryPageHeader />
+      <InventorySectionGuide>
+        Prefer starting from <strong>Batch lots</strong> — click a lot, then use <strong>Qty fix</strong> in the pop-up. This
+        page is for ad-hoc corrections when you are not coming from a specific lot.
+      </InventorySectionGuide>
 
-      <form onSubmit={onSubmit} className="card-widget max-w-2xl space-y-4">
+      <form onSubmit={onSubmit} className="stocks-list-card card-widget max-w-2xl space-y-4 p-4 md:p-5">
         <label className="block space-y-1">
           <span className="text-small font-medium text-muted">Variant</span>
           <select
@@ -147,9 +159,9 @@ export function InventoryAdjustmentPage() {
               }
             >
               <option value="">Select reason…</option>
-              {REASONS.map((r) => (
+              {REASONS.filter((r) => r !== 'transfer').map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {REASON_LABEL[r]}
                 </option>
               ))}
             </select>
@@ -193,10 +205,10 @@ export function InventoryAdjustmentPage() {
             Save adjustment
           </button>
           <Link to="/admin/inventory" className="btn-secondary">
-            Cancel
+            Back to stocks
           </Link>
         </div>
       </form>
-    </PageShell>
+    </InventoryCatalogPageLayout>
   )
 }

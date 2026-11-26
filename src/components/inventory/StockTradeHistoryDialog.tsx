@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { formatInr } from '@/inventory/format-money'
 import type { BrandTradeRow, MonthTradeRow } from '@/inventory/trade-history'
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
 import { cn } from '@/lib/utils'
 import { TargetProgressTrack, YearTargetStatus } from '@/components/inventory/YearTargetStatus'
 
@@ -43,6 +44,8 @@ export function StockTradeHistoryDialog({
     setDraftPurcTarget(purchaseTargetInr > 0 ? String(purchaseTargetInr) : '')
   }, [open, year, saleTargetInr, purchaseTargetInr])
 
+  useBodyScrollLock(open)
+
   if (!open) return null
 
   const isPurchase = focus === 'purchase'
@@ -77,7 +80,7 @@ export function StockTradeHistoryDialog({
     draftTargetPreview > 0 ? Math.min(100, (yearFocusTotal / draftTargetPreview) * 100) : 0
 
   return (
-    <div className="confirm-backdrop confirm-backdrop--sheet" role="presentation" onClick={onClose}>
+    <div className="confirm-backdrop confirm-backdrop--sheet" role="presentation">
       <div
         className="support-dialog stocks-trade-dialog"
         role="dialog"

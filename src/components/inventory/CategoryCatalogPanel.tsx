@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Plus } from 'lucide-react'
+import { CatalogTablePagination } from '@/components/inventory/CatalogTablePagination'
 import type { InventoryCategory, ProductVariant } from '@/inventory/types'
 import { CatalogActiveToggle } from '@/components/inventory/CatalogActiveToggle'
 import { CategoryFormModal, type CategoryFormInput } from '@/components/inventory/CategoryFormModal'
@@ -21,6 +22,8 @@ interface CategoryCatalogPanelProps {
 
 export function CategoryCatalogPanel({ categories, variants, variantCounts, onSave }: CategoryCatalogPanelProps) {
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<InventoryCategory | null>(null)
   const [skuViewCategory, setSkuViewCategory] = useState<InventoryCategory | null>(null)
@@ -29,6 +32,13 @@ export function CategoryCatalogPanel({ categories, variants, variantCounts, onSa
     () => categories.filter((c) => (statusFilter === 'active' ? c.active : !c.active)),
     [categories, statusFilter]
   )
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
+  const pageRows = visible.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
 
   const openAdd = () => {
     setEditing(null)
@@ -53,7 +63,13 @@ export function CategoryCatalogPanel({ categories, variants, variantCounts, onSa
     <>
       <section className="stocks-list-card card-widget !p-0">
         <div className="stocks-list-toolbar">
-          <CatalogActiveToggle value={statusFilter} onChange={setStatusFilter} />
+          <CatalogActiveToggle
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v)
+              setPage(1)
+            }}
+          />
           <button type="button" className="btn-primary !ml-auto !h-10 px-4 text-sm" onClick={openAdd}>
             <Plus className="h-4 w-4" />
             Add category
@@ -81,36 +97,38 @@ export function CategoryCatalogPanel({ categories, variants, variantCounts, onSa
                     </td>
                   </tr>
                 ) : (
-                  visible.map((c) => {
+                  pageRows.map((c) => {
                     const count = variantCounts[c.id] ?? 0
                     return (
-                      <tr key={c.id} className={cn(!c.active && 'stocks-row--muted')}>
+                      <tr
+                        key={c.id}
+                        className={cn('catalog-table-row', !c.active && 'stocks-row--muted')}
+                        onClick={() => openSkuList(c)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            openSkuList(c)
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View ${count} SKUs in ${c.name}`}
+                      >
                         <td>
-                          <button type="button" className="catalog-entity-link text-left" onClick={() => openSkuList(c)}>
-                            <span className="block font-medium">{c.name}</span>
-                            {c.description ? (
-                              <span className="mt-0.5 block text-xs font-normal text-muted">{c.description}</span>
-                            ) : null}
-                          </button>
+                          <p className="font-medium text-charcoal">{c.name}</p>
+                          {c.description ? (
+                            <p className="mt-0.5 text-xs text-muted">{c.description}</p>
+                          ) : null}
                         </td>
                         <td>{KIND_LABEL[c.kind]}</td>
                         <td className="tabular-nums">{c.defaultDisplayUnit}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="catalog-sku-count-link tabular-nums"
-                            onClick={() => openSkuList(c)}
-                            aria-label={`${count} SKUs in ${c.name}`}
-                          >
-                            {count}
-                          </button>
-                        </td>
+                        <td className="tabular-nums">{count}</td>
                         <td>
                           <span className={cn('catalog-crud-status', c.active && 'catalog-crud-status--on')}>
                             {c.active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="stocks-table-actions-cell">
+                        <td className="stocks-table-actions-cell" onClick={(e) => e.stopPropagation()}>
                           <div className="stocks-table-actions">
                             <button
                               type="button"
@@ -129,6 +147,17 @@ export function CategoryCatalogPanel({ categories, variants, variantCounts, onSa
               </tbody>
             </table>
           </div>
+          {visible.length > 0 ? (
+            <CatalogTablePagination
+              page={page}
+              pageSize={pageSize}
+              totalItems={visible.length}
+              pageItemCount={pageRows.length}
+              itemLabel="categories"
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          ) : null}
         </div>
       </section>
 
@@ -144,12 +173,26 @@ export function CategoryCatalogPanel({ categories, variants, variantCounts, onSa
         title={skuViewCategory?.name ?? ''}
         subtitle={
           skuViewCategory
-            ? `${KIND_LABEL[skuViewCategory.kind]} · default ${skuViewCategory.defaultDisplayUnit}`
+            ? [
+                KIND_LABEL[skuViewCategory.kind],
+                `unit ${skuViewCategory.defaultDisplayUnit}`,
+                skuViewCategory.defaultPackLabel ? `pack ${skuViewCategory.defaultPackLabel}` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
             : undefined
         }
         meta={
-          skuViewCategory?.description
-            ? [{ label: 'Note', value: skuViewCategory.description }]
+          skuViewCategory
+            ? [
+                ...(skuViewCategory.description
+                  ? [{ label: 'Note', value: skuViewCategory.description }]
+                  : []),
+                {
+                  label: 'Add stock',
+                  value: skuViewCategory.trackExpiry === false ? 'No expiry field' : 'Expiry tracked',
+                },
+              ]
             : undefined
         }
         skus={skuDialogSkus}

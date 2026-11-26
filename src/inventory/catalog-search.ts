@@ -1,4 +1,5 @@
-import type { ProductVariant } from '@/inventory/types'
+import { CATEGORY_KIND_CONFIG } from '@/inventory/category-kind-config'
+import type { InventoryCategoryKind, ProductVariant } from '@/inventory/types'
 
 export interface CatalogSearchHit {
   variantId: string
@@ -44,6 +45,6 @@ export function searchCatalogVariants(
   return hits.sort((a, b) => b.score - a.score).slice(0, limit)
 }
 
-export function categoryNeedsShade(kind: import('@/inventory/types').InventoryCategoryKind): boolean {
-  return kind === 'paint'
+export function categoryNeedsShade(kind: InventoryCategoryKind): boolean {
+  return CATEGORY_KIND_CONFIG[kind].requiresShade
 }

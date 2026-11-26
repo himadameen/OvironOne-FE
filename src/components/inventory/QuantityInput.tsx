@@ -14,6 +14,8 @@ interface QuantityInputProps {
   inputId?: string
   min?: number
   step?: number
+  /** Use stock-form field styling (batch lot modals). */
+  variant?: 'default' | 'stock-form'
 }
 
 export function QuantityInput({
@@ -27,10 +29,44 @@ export function QuantityInput({
   inputId = 'qty-input',
   min = 0,
   step = 0.01,
+  variant = 'default',
 }: QuantityInputProps) {
+  const stockForm = variant === 'stock-form'
   const options = unitsForQuantityInput(kind, densityKgPerL)
   const hint =
     qty > 0 ? conversionHint(qty, unit, kind, densityKgPerL) : null
+
+  if (stockForm) {
+    return (
+      <div className={cn('stock-form-qty-block', className)}>
+        <span className="stock-form-label" id={`${inputId}-label`}>
+          Quantity
+        </span>
+        <div className="stock-form-qty-row">
+          <input
+            id={inputId}
+            type="number"
+            aria-labelledby={`${inputId}-label`}
+            className="stock-form-input tabular-nums stock-form-qty-input"
+            min={min}
+            step={kind === 'count' ? 1 : step}
+            value={Number.isFinite(qty) ? qty : ''}
+            onChange={(e) => onQtyChange(Number(e.target.value))}
+          />
+          <UnitToggle
+            value={unit}
+            options={options}
+            onChange={onUnitChange}
+            className="stock-form-unit-toggle"
+          />
+        </div>
+        {hint ? <p className="stock-form-qty-hint">{hint}</p> : null}
+        {kind === 'volume' && !densityKgPerL ? (
+          <p className="stock-form-error">Density required for L ↔ kg conversion on this SKU.</p>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <div className={cn('space-y-2', className)}>
